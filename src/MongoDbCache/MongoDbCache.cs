@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
+using Microsoft.Extensions.Options;
 using MongoDB.Driver;
 
 namespace MongoDbCache
@@ -19,38 +20,6 @@ namespace MongoDbCache
         {
             return Builders<CacheItem>.Filter.Ne(x => x.ExpiresAt, null);
         }
-
-        /*private static DateTimeOffset? GetExpiration(DistributedCacheEntryOptions options)
-        {
-            if (options?.AbsoluteExpiration == null
-                && options?.AbsoluteExpirationRelativeToNow == null
-                && options?.SlidingExpiration == null)
-            {
-                return null;
-            }
-
-            var absoluteExpiration = options?.AbsoluteExpiration;
-            var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
-
-            if (options?.AbsoluteExpirationRelativeToNow != null)
-            {
-                absoluteExpiration = options.AbsoluteExpirationRelativeToNow.Value.TotalSeconds >= 1
-                    ? DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value)
-                    : DateTimeOffset.UtcNow.AddSeconds(-1);
-            }
-
-            if (slidingExpirationInSeconds == null)
-            {
-                return absoluteExpiration;
-            }
-
-            //var expiresAt = GetExpiration(slidingExpirationInSeconds, absoluteExpiration);
-            var seconds = slidingExpirationInSeconds.GetValueOrDefault();
-
-            return DateTimeOffset.UtcNow.AddSeconds(seconds) > absoluteExpiration
-                ? absoluteExpiration
-                : DateTimeOffset.UtcNow.AddSeconds(seconds);
-        }*/
 
         private static DateTimeOffset? GetExpiration(double? slidingExpirationInSeconds, DateTimeOffset? absoluteExpiration)
         {
@@ -134,13 +103,15 @@ namespace MongoDbCache
         }
         #endregion
 
-        public MongoDbCache(IMongoDatabase mongoDatabase, MongoDbCacheOptions options)
+        public MongoDbCache(IMongoDatabase mongoDatabase, IOptions<MongoDbCacheOptions> optionsAccessor)
         {
+            var options = optionsAccessor.Value;
             _collection = mongoDatabase.GetCollection<CacheItem>(options.CollectionName);
         }
 
-        public MongoDbCache(MongoDbCacheOptions options)
+        public MongoDbCache(IOptions<MongoDbCacheOptions> optionsAccessor)
         {
+            var options = optionsAccessor.Value;
             var client = new MongoClient(options.ConnectionString);
             var database = client.GetDatabase(options.DatabaseName);
             _collection = database.GetCollection<CacheItem>(options.CollectionName);          
