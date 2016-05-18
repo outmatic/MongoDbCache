@@ -36,7 +36,7 @@ namespace MongoDbCache
 
         private CacheItem UpdateExpirationIfRequired(CacheItem cacheItem)
         {
-            if (cacheItem.SlidingExpirationInSeconds == null)
+            if (cacheItem.SlidingExpirationInSeconds == null && cacheItem.AbsoluteExpiration == null)
             {
                 return cacheItem;
             }
@@ -55,7 +55,7 @@ namespace MongoDbCache
 
         private async Task<CacheItem> UpdateExpirationIfRequiredAsync(CacheItem cacheItem)
         {
-            if (cacheItem.SlidingExpirationInSeconds == null)
+            if (cacheItem.SlidingExpirationInSeconds == null && cacheItem.AbsoluteExpiration == null)
             {
                 return cacheItem;
             }
@@ -74,7 +74,7 @@ namespace MongoDbCache
 
         private bool CheckIfExpired(CacheItem cacheItem)
         {
-            if (cacheItem.ExpiresAt > DateTimeOffset.UtcNow)
+            if (cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
             {
                 return false;
             }
@@ -86,7 +86,7 @@ namespace MongoDbCache
 
         private async Task<bool> CheckIfExpiredAsync(CacheItem cacheItem)
         {
-            if (cacheItem.ExpiresAt > DateTimeOffset.UtcNow)
+            if (cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
             {
                 return false;
             }
@@ -97,12 +97,16 @@ namespace MongoDbCache
         }
         #endregion
 
+        public MongoDbCache(IMongoDatabase mongoDatabase, MongoDbCacheOptions options)
+        {
+            _collection = mongoDatabase.GetCollection<CacheItem>(options.CollectionName);
+        }
+
         public MongoDbCache(MongoDbCacheOptions options)
         {
-            var cacheOptions = options;
-            var client = new MongoClient(cacheOptions.ConnectionString);
-            var database = client.GetDatabase(cacheOptions.DatabaseName);
-            _collection = database.GetCollection<CacheItem>(cacheOptions.CollectionName);
+            var client = new MongoClient(options.ConnectionString);
+            var database = client.GetDatabase(options.DatabaseName);
+            _collection = database.GetCollection<CacheItem>(options.CollectionName);          
         }
 
         private byte[] GetItem(string key, bool withValue)
