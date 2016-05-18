@@ -177,10 +177,10 @@ namespace MongoDbCache
             return await GetItemAsync(key, true);
         }
 
-        public void Set(string key, byte[] value, DistributedCacheEntryOptions options)
+        public void Set(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            var expiresAt = GetExpiration(options.SlidingExpiration?.TotalSeconds, options.AbsoluteExpiration);
-            var cacheItem = new CacheItem(key, value, expiresAt, options.AbsoluteExpiration, options.SlidingExpiration?.TotalSeconds);
+            var expiresAt = GetExpiration(options?.SlidingExpiration?.TotalSeconds, options?.AbsoluteExpiration);
+            var cacheItem = new CacheItem(key, value, expiresAt, options?.AbsoluteExpiration, options?.SlidingExpiration?.TotalSeconds);
 
             _collection.ReplaceOne(FilterByKey(key), cacheItem, new UpdateOptions
             {
@@ -188,10 +188,10 @@ namespace MongoDbCache
             });
         }
 
-        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options)
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            var expiresAt = GetExpiration(options.SlidingExpiration?.TotalSeconds, options.AbsoluteExpiration);
-            var cacheItem = new CacheItem(key, value, expiresAt, options.AbsoluteExpiration, options.SlidingExpiration?.TotalSeconds);
+            var expiresAt = GetExpiration(options?.SlidingExpiration?.TotalSeconds, options?.AbsoluteExpiration);
+            var cacheItem = new CacheItem(key, value, expiresAt, options?.AbsoluteExpiration, options?.SlidingExpiration?.TotalSeconds);
 
             await _collection.ReplaceOneAsync(FilterByKey(key), cacheItem, new UpdateOptions
             {
