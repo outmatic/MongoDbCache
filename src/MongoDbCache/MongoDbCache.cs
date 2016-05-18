@@ -20,11 +20,48 @@ namespace MongoDbCache
             return Builders<CacheItem>.Filter.Ne(x => x.ExpiresAt, null);
         }
 
+        /*private static DateTimeOffset? GetExpiration(DistributedCacheEntryOptions options)
+        {
+            if (options?.AbsoluteExpiration == null
+                && options?.AbsoluteExpirationRelativeToNow == null
+                && options?.SlidingExpiration == null)
+            {
+                return null;
+            }
+
+            var absoluteExpiration = options?.AbsoluteExpiration;
+            var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
+
+            if (options?.AbsoluteExpirationRelativeToNow != null)
+            {
+                absoluteExpiration = options.AbsoluteExpirationRelativeToNow.Value.TotalSeconds >= 1
+                    ? DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value)
+                    : DateTimeOffset.UtcNow.AddSeconds(-1);
+            }
+
+            if (slidingExpirationInSeconds == null)
+            {
+                return absoluteExpiration;
+            }
+
+            //var expiresAt = GetExpiration(slidingExpirationInSeconds, absoluteExpiration);
+            var seconds = slidingExpirationInSeconds.GetValueOrDefault();
+
+            return DateTimeOffset.UtcNow.AddSeconds(seconds) > absoluteExpiration
+                ? absoluteExpiration
+                : DateTimeOffset.UtcNow.AddSeconds(seconds);
+        }*/
+
         private static DateTimeOffset? GetExpiration(double? slidingExpirationInSeconds, DateTimeOffset? absoluteExpiration)
         {
             if (slidingExpirationInSeconds == null && absoluteExpiration == null)
             {
                 return null;
+            }
+
+            if (slidingExpirationInSeconds == null)
+            {
+                return absoluteExpiration;
             }
 
             var seconds = slidingExpirationInSeconds.GetValueOrDefault();
@@ -74,24 +111,24 @@ namespace MongoDbCache
 
         private bool CheckIfExpired(CacheItem cacheItem)
         {
-            if (cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
+            if (cacheItem.ExpiresAt == null || cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
             {
                 return false;
             }
 
-            _collection.DeleteOne(FilterByKey(cacheItem.Key));
+            Remove(cacheItem.Key);
 
             return true;
         }
 
         private async Task<bool> CheckIfExpiredAsync(CacheItem cacheItem)
         {
-            if (cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
+            if (cacheItem.ExpiresAt == null || cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
             {
                 return false;
             }
 
-            await _collection.DeleteOneAsync(FilterByKey(cacheItem.Key));
+            await RemoveAsync(cacheItem.Key);
 
             return true;
         }
@@ -179,8 +216,24 @@ namespace MongoDbCache
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            var expiresAt = GetExpiration(options?.SlidingExpiration?.TotalSeconds, options?.AbsoluteExpiration);
-            var cacheItem = new CacheItem(key, value, expiresAt, options?.AbsoluteExpiration, options?.SlidingExpiration?.TotalSeconds);
+            var absolutExpiration = options?.AbsoluteExpiration;
+            var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
+
+            if (options?.AbsoluteExpirationRelativeToNow != null)
+            {
+                absolutExpiration = options.AbsoluteExpirationRelativeToNow.Value.TotalSeconds >= 1
+                    ? DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value)
+                    : DateTimeOffset.UtcNow.AddSeconds(-1);
+            }
+
+            if (absolutExpiration < DateTimeOffset.UtcNow || slidingExpirationInSeconds < 1)
+            {
+                return;
+            }
+
+            var expiresAt = GetExpiration(slidingExpirationInSeconds, absolutExpiration);
+
+            var cacheItem = new CacheItem(key, value, expiresAt, absolutExpiration, slidingExpirationInSeconds);
 
             _collection.ReplaceOne(FilterByKey(key), cacheItem, new UpdateOptions
             {
@@ -190,8 +243,24 @@ namespace MongoDbCache
 
         public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            var expiresAt = GetExpiration(options?.SlidingExpiration?.TotalSeconds, options?.AbsoluteExpiration);
-            var cacheItem = new CacheItem(key, value, expiresAt, options?.AbsoluteExpiration, options?.SlidingExpiration?.TotalSeconds);
+            var absolutExpiration = options?.AbsoluteExpiration;
+            var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
+
+            if (options?.AbsoluteExpirationRelativeToNow != null)
+            {
+                absolutExpiration = options.AbsoluteExpirationRelativeToNow.Value.TotalSeconds >= 1
+                    ? DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value)
+                    : DateTimeOffset.UtcNow.AddSeconds(-1);
+            }
+
+            if (absolutExpiration < DateTimeOffset.UtcNow || slidingExpirationInSeconds < 1)
+            {
+                return;
+            }
+
+            var expiresAt = GetExpiration(slidingExpirationInSeconds, absolutExpiration);
+
+            var cacheItem = new CacheItem(key, value, expiresAt, absolutExpiration, slidingExpirationInSeconds);
 
             await _collection.ReplaceOneAsync(FilterByKey(key), cacheItem, new UpdateOptions
             {
