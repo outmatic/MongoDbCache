@@ -14,11 +14,6 @@ namespace MongoDbCache
         private readonly TimeSpan _defaultScanInterval = TimeSpan.FromMinutes(5);
         private readonly MongoContext _mongoContext;
 
-        private static FilterDefinition<CacheItem> FilterByKey(string key)
-        {
-            return Builders<CacheItem>.Filter.Eq(x => x.Key, key);
-        }
-
         private void SetScanInterval(TimeSpan? scanInterval)
         {
             _scanInterval = scanInterval?.TotalSeconds > 0

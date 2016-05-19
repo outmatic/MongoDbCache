@@ -16,6 +16,7 @@ namespace MongoDbCache
 
             services.AddOptions();
             services.TryAdd(ServiceDescriptor.Singleton<IDistributedCache, MongoDbCache>());
+
             return services;
         }
     }

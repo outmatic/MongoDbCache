@@ -51,14 +51,14 @@ namespace MongoDbCache.Tests
         public void SetAlwaysOverwrites()
         {
             var cache = MongoDbCacheConfig.CreateCacheInstance();
-            var value1 = new byte[1] { 1 };
+            var value1 = new byte[] { 1 };
             const string key = "myKey";
 
             cache.Set(key, value1);
             var result = cache.Get(key);
             Assert.Equal(value1, result);
 
-            var value2 = new byte[1] { 2 };
+            var value2 = new byte[] { 2 };
             cache.Set(key, value2);
             result = cache.Get(key);
             Assert.Equal(value2, result);
