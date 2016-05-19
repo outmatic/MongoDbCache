@@ -6,16 +6,17 @@ namespace MongoDbCache
     internal class CacheItem
     {
         [BsonId]
-        public string Key { get; private set; }
+        public string Key { get; }
         [BsonElement("value")]
-        public byte[] Value { get; private set; }
+        public byte[] Value { get; }
         [BsonElement("expiresAt")]
         public DateTimeOffset? ExpiresAt { get; private set; }
         [BsonElement("absoluteExpiration")]
-        public DateTimeOffset? AbsoluteExpiration { get; private set; }
+        public DateTimeOffset? AbsoluteExpiration { get; }
         [BsonElement("slidingExpirationInSeconds")]
-        public double? SlidingExpirationInSeconds { get; private set; }
+        public double? SlidingExpirationInSeconds { get; }
 
+        [BsonConstructor]
         public CacheItem(string key, byte[] value, DateTimeOffset? expiresAt, DateTimeOffset? absoluteExpiration, double? slidingExpirationInSeconds)
         {
             Key = key;
@@ -25,7 +26,7 @@ namespace MongoDbCache
             SlidingExpirationInSeconds = slidingExpirationInSeconds;
         }
 
-        public CacheItem SetExpiration(DateTimeOffset? expiresAt)
+        public CacheItem WithExpiresAt(DateTimeOffset? expiresAt)
         {
             return new CacheItem(Key, Value, expiresAt, AbsoluteExpiration, SlidingExpirationInSeconds);
         }

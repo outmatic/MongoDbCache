@@ -114,19 +114,6 @@ namespace MongoDbCache.Tests
             Assert.Null(result);
         }*/
 
-        [Fact]
-        public void RelativeSubSecondExpirationExpiresImmediately()
-        {
-            var cache = MongoDbCacheConfig.CreateCacheInstance();
-            var key = "myKey";
-            var value = new byte[1];
-
-            cache.Set(key, value, new DistributedCacheEntryOptions().SetAbsoluteExpiration(TimeSpan.FromSeconds(0.25)));
-
-            var result = cache.Get(key);
-            Assert.Null(result);
-        }
-
         /*[Fact]
         public void NegativeSlidingExpirationThrows()
         {
@@ -172,19 +159,6 @@ namespace MongoDbCache.Tests
             Thread.Sleep(TimeSpan.FromSeconds(3));
 
             result = cache.Get(key);
-            Assert.Null(result);
-        }
-
-        [Fact]
-        public void SlidingSubSecondExpirationExpiresImmediately()
-        {
-            var cache = MongoDbCacheConfig.CreateCacheInstance();
-            const string key = "myKey";
-            var value = new byte[1];
-
-            cache.Set(key, value, new DistributedCacheEntryOptions().SetSlidingExpiration(TimeSpan.FromSeconds(0.25)));
-
-            var result = cache.Get(key);
             Assert.Null(result);
         }
 

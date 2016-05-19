@@ -9,254 +9,105 @@ namespace MongoDbCache
     public class MongoDbCache : IDistributedCache
     {
         #region private
-        private readonly IMongoCollection<CacheItem> _collection;
+        private DateTimeOffset _lastScan = DateTimeOffset.UtcNow;
+        private TimeSpan _scanInterval;
+        private readonly TimeSpan _defaultScanInterval = TimeSpan.FromMinutes(5);
+        private readonly MongoContext _mongoContext;
 
         private static FilterDefinition<CacheItem> FilterByKey(string key)
         {
             return Builders<CacheItem>.Filter.Eq(x => x.Key, key);
         }
 
-        private static FilterDefinition<CacheItem> FilterByExpiresAtNotNull()
+        private void SetScanInterval(TimeSpan? scanInterval)
         {
-            return Builders<CacheItem>.Filter.Ne(x => x.ExpiresAt, null);
+            _scanInterval = scanInterval?.TotalSeconds > 0
+                ? scanInterval.Value
+                : _defaultScanInterval;
         }
 
-        private static DateTimeOffset? GetExpiration(double? slidingExpirationInSeconds, DateTimeOffset? absoluteExpiration)
-        {
-            if (slidingExpirationInSeconds == null && absoluteExpiration == null)
-            {
-                return null;
-            }
-
-            if (slidingExpirationInSeconds == null)
-            {
-                return absoluteExpiration;
-            }
-
-            var seconds = slidingExpirationInSeconds.GetValueOrDefault();
-
-            return DateTimeOffset.UtcNow.AddSeconds(seconds) > absoluteExpiration
-                ? absoluteExpiration
-                : DateTimeOffset.UtcNow.AddSeconds(seconds);
-        }
-
-        private CacheItem UpdateExpirationIfRequired(CacheItem cacheItem)
-        {
-            if (cacheItem.SlidingExpirationInSeconds == null && cacheItem.AbsoluteExpiration == null)
-            {
-                return cacheItem;
-            }
-
-            var absoluteExpiration = GetExpiration(cacheItem.SlidingExpirationInSeconds, cacheItem.AbsoluteExpiration);
-            if (absoluteExpiration == null)
-            {
-                return cacheItem;
-            }
-
-            _collection.UpdateOne(FilterByKey(cacheItem.Key) & FilterByExpiresAtNotNull(),
-                Builders<CacheItem>.Update.Set(x => x.ExpiresAt, absoluteExpiration));
-
-            return cacheItem.SetExpiration(absoluteExpiration);
-        }
-
-        private async Task<CacheItem> UpdateExpirationIfRequiredAsync(CacheItem cacheItem)
-        {
-            if (cacheItem.SlidingExpirationInSeconds == null && cacheItem.AbsoluteExpiration == null)
-            {
-                return cacheItem;
-            }
-
-            var absoluteExpiration = GetExpiration(cacheItem.SlidingExpirationInSeconds, cacheItem.AbsoluteExpiration);
-            if (absoluteExpiration == null)
-            {
-                return cacheItem;
-            }
-
-            await _collection.UpdateOneAsync(FilterByKey(cacheItem.Key) & FilterByExpiresAtNotNull(),
-                Builders<CacheItem>.Update.Set(x => x.ExpiresAt, absoluteExpiration));
-
-            return cacheItem.SetExpiration(absoluteExpiration);
-        }
-
-        private bool CheckIfExpired(CacheItem cacheItem)
-        {
-            if (cacheItem.ExpiresAt == null || cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
-            {
-                return false;
-            }
-
-            Remove(cacheItem.Key);
-
-            return true;
-        }
-
-        private async Task<bool> CheckIfExpiredAsync(CacheItem cacheItem)
-        {
-            if (cacheItem.ExpiresAt == null || cacheItem.ExpiresAt >= DateTimeOffset.UtcNow)
-            {
-                return false;
-            }
-
-            await RemoveAsync(cacheItem.Key);
-
-            return true;
-        }
         #endregion
 
         public MongoDbCache(IMongoDatabase mongoDatabase, IOptions<MongoDbCacheOptions> optionsAccessor)
         {
             var options = optionsAccessor.Value;
-            _collection = mongoDatabase.GetCollection<CacheItem>(options.CollectionName);
+            _mongoContext = new MongoContext(mongoDatabase, options.CollectionName);
+            SetScanInterval(options.ScanInterval);
         }
 
         public MongoDbCache(IOptions<MongoDbCacheOptions> optionsAccessor)
         {
             var options = optionsAccessor.Value;
-            var client = new MongoClient(options.ConnectionString);
-            var database = client.GetDatabase(options.DatabaseName);
-            _collection = database.GetCollection<CacheItem>(options.CollectionName);          
-        }
-
-        private byte[] GetItem(string key, bool withValue)
-        {
-            if (key == null)
-            {
-                return null;
-            }
-
-            var find = _collection.Find(FilterByKey(key));
-            if (!withValue)
-            {
-                find = find.Project<CacheItem>(Builders<CacheItem>.Projection.Exclude(x => x.Value));
-            }
-
-            var cacheItem = find.SingleOrDefault();
-            if (cacheItem == null)
-            {
-                return null;
-            }
-
-            if (CheckIfExpired(cacheItem))
-            {
-                return null;
-            }
-
-            cacheItem = UpdateExpirationIfRequired(cacheItem);
-
-            return cacheItem?.Value;
-        }
-
-        private async Task<byte[]> GetItemAsync(string key, bool withValue)
-        {
-            if (key == null)
-            {
-                return null;
-            }
-
-            var find = _collection.Find(FilterByKey(key));
-            if (!withValue)
-            {
-                find = find.Project<CacheItem>(Builders<CacheItem>.Projection.Exclude(x => x.Value));
-            }
-
-            var cacheItem = await find.SingleOrDefaultAsync();
-            if (cacheItem == null)
-            {
-                return null;
-            }
-
-            if (await CheckIfExpiredAsync(cacheItem))
-            {
-                return null;
-            }
-
-            cacheItem = await UpdateExpirationIfRequiredAsync(cacheItem);
-
-            return cacheItem?.Value;
+            _mongoContext = new MongoContext(options.ConnectionString, options.DatabaseName, options.CollectionName);
+            SetScanInterval(options.ScanInterval);
         }
 
         public byte[] Get(string key)
         {
-            return GetItem(key, true);
+            ScanAndDeleteExpired();
+
+            return _mongoContext.GetCacheItem(key, true);
         }
 
         public async Task<byte[]> GetAsync(string key)
         {
-            return await GetItemAsync(key, true);
+            ScanAndDeleteExpired();
+
+            return await _mongoContext.GetCacheItemAsync(key, true);
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            var absolutExpiration = options?.AbsoluteExpiration;
-            var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
+            ScanAndDeleteExpired();
 
-            if (options?.AbsoluteExpirationRelativeToNow != null)
-            {
-                absolutExpiration = options.AbsoluteExpirationRelativeToNow.Value.TotalSeconds >= 1
-                    ? DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value)
-                    : DateTimeOffset.UtcNow.AddSeconds(-1);
-            }
-
-            if (absolutExpiration < DateTimeOffset.UtcNow || slidingExpirationInSeconds < 1)
-            {
-                return;
-            }
-
-            var expiresAt = GetExpiration(slidingExpirationInSeconds, absolutExpiration);
-
-            var cacheItem = new CacheItem(key, value, expiresAt, absolutExpiration, slidingExpirationInSeconds);
-
-            _collection.ReplaceOne(FilterByKey(key), cacheItem, new UpdateOptions
-            {
-                IsUpsert = true
-            });
+            _mongoContext.Set(key, value, options);
         }
 
         public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            var absolutExpiration = options?.AbsoluteExpiration;
-            var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
+            ScanAndDeleteExpired();
 
-            if (options?.AbsoluteExpirationRelativeToNow != null)
-            {
-                absolutExpiration = options.AbsoluteExpirationRelativeToNow.Value.TotalSeconds >= 1
-                    ? DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value)
-                    : DateTimeOffset.UtcNow.AddSeconds(-1);
-            }
-
-            if (absolutExpiration < DateTimeOffset.UtcNow || slidingExpirationInSeconds < 1)
-            {
-                return;
-            }
-
-            var expiresAt = GetExpiration(slidingExpirationInSeconds, absolutExpiration);
-
-            var cacheItem = new CacheItem(key, value, expiresAt, absolutExpiration, slidingExpirationInSeconds);
-
-            await _collection.ReplaceOneAsync(FilterByKey(key), cacheItem, new UpdateOptions
-            {
-                IsUpsert = true
-            });
+            await _mongoContext.SetAsync(key, value, options);
         }
 
         public void Refresh(string key)
         {
-            GetItem(key, false);
+            ScanAndDeleteExpired();
+
+            _mongoContext.GetCacheItem(key, false);
         }
 
         public async Task RefreshAsync(string key)
         {
-            await GetItemAsync(key, false);
+            ScanAndDeleteExpired();
+
+            await _mongoContext.GetCacheItemAsync(key, false);
         }
 
         public void Remove(string key)
         {
-            _collection.DeleteOne(FilterByKey(key));
+            ScanAndDeleteExpired();
+
+            _mongoContext.Remove(key);
         }
 
         public async Task RemoveAsync(string key)
         {
-            await _collection.DeleteOneAsync(FilterByKey(key));
+            ScanAndDeleteExpired();
+
+            await _mongoContext.RemoveAsync(key);
+        }
+
+        private void ScanAndDeleteExpired()
+        {
+            if (_lastScan.Add(_scanInterval) < DateTimeOffset.UtcNow)
+            {
+                Task.Run(() =>
+                {
+                    _lastScan = DateTimeOffset.UtcNow;
+                    _mongoContext.DeleteExpired();
+                });
+            }
         }
     }
 }
