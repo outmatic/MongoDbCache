@@ -164,11 +164,6 @@ namespace MongoDbCache
                 throw new ArgumentNullException(nameof(value));
             }
 
-            if (options?.AbsoluteExpirationRelativeToNow?.Ticks < 0)
-            {
-
-            }
-
             var absolutExpiration = options?.AbsoluteExpiration;
             var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
 
@@ -211,10 +206,9 @@ namespace MongoDbCache
                 absolutExpiration = DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value);
             }
 
-            if (absolutExpiration < DateTimeOffset.UtcNow)
+            if (absolutExpiration <= DateTimeOffset.UtcNow)
             {
-                //TODO throw exceptions
-                return;
+                throw new InvalidOperationException("The absolute expiration value must be in the future.");
             }
 
             var expiresAt = GetExpiresAt(slidingExpirationInSeconds, absolutExpiration);
