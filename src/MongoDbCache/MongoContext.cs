@@ -89,6 +89,12 @@ namespace MongoDbCache
             var client = new MongoClient(connectionString);
             var database = client.GetDatabase(databaseName);
             _collection = database.GetCollection<CacheItem>(collectionName);
+            _collection.Indexes.CreateOne(
+                Builders<CacheItem>.IndexKeys.Ascending(x => x.ExpiresAt),
+                new CreateIndexOptions
+                {
+                    Background = true                    
+                });
         }
 
         public void DeleteExpired(DateTimeOffset utcNow)
