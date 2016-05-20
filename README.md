@@ -26,3 +26,5 @@ public void ConfigureServices(IServiceCollection services)
     }));
 }
 ```
+
+MongoDbCache implements IDistributedCache, therefore you can use all the sync and async methods provided by the interface, please see https://docs.asp.net/en/latest/performance/caching/distributed.html#the-idistributedcache-interface.
