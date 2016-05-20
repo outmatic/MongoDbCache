@@ -84,11 +84,6 @@ namespace MongoDbCache
         }
         #endregion
 
-        public MongoContext(IMongoDatabase database, string collectionName)
-        {
-            _collection = database.GetCollection<CacheItem>(collectionName);
-        }
-
         public MongoContext(string connectionString, string databaseName, string collectionName)
         {
             var client = new MongoClient(connectionString);

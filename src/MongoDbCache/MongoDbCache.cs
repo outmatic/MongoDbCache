@@ -2,7 +2,6 @@
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
-using MongoDB.Driver;
 
 namespace MongoDbCache
 {
@@ -14,25 +13,39 @@ namespace MongoDbCache
         private readonly TimeSpan _defaultScanInterval = TimeSpan.FromMinutes(5);
         private readonly MongoContext _mongoContext;
 
+        private void ValidateOptions(MongoDbCacheOptions cacheOptions)
+        {
+            if (string.IsNullOrEmpty(cacheOptions.ConnectionString))
+            {
+                throw new ArgumentException(
+                    $"{nameof(cacheOptions.ConnectionString)} cannot be empty or null.");
+            }
+
+            if (string.IsNullOrEmpty(cacheOptions.DatabaseName))
+            {
+                throw new ArgumentException(
+                    $"{nameof(cacheOptions.DatabaseName)} cannot be empty or null.");
+            }
+
+            if (string.IsNullOrEmpty(cacheOptions.CollectionName))
+            {
+                throw new ArgumentException(
+                    $"{nameof(cacheOptions.CollectionName)} cannot be empty or null.");
+            }
+        }
+
         private void SetScanInterval(TimeSpan? scanInterval)
         {
             _scanInterval = scanInterval?.TotalSeconds > 0
                 ? scanInterval.Value
                 : _defaultScanInterval;
         }
-
         #endregion
-
-        public MongoDbCache(IMongoDatabase mongoDatabase, IOptions<MongoDbCacheOptions> optionsAccessor)
-        {
-            var options = optionsAccessor.Value;
-            _mongoContext = new MongoContext(mongoDatabase, options.CollectionName);
-            SetScanInterval(options.ExpiredScanInterval);
-        }
 
         public MongoDbCache(IOptions<MongoDbCacheOptions> optionsAccessor)
         {
             var options = optionsAccessor.Value;
+            ValidateOptions(options);
             _mongoContext = new MongoContext(options.ConnectionString, options.DatabaseName, options.CollectionName);
             SetScanInterval(options.ExpiredScanInterval);
         }
