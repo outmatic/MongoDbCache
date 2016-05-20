@@ -1,7 +1,7 @@
 ﻿{
   "title": "MongoDbCache",
   "copyright": "AppSpace snc",
-  "description": "An IDistributedCache based on MongoDb",
+  "description": "A distributed cache based on MongoDb",
   "version": "0.3.2-rc2-*",
 
   "dependencies": {

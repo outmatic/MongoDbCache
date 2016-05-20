@@ -27,80 +27,86 @@ namespace MongoDbCache
         {
             var options = optionsAccessor.Value;
             _mongoContext = new MongoContext(mongoDatabase, options.CollectionName);
-            SetScanInterval(options.ScanInterval);
+            SetScanInterval(options.ExpiredScanInterval);
         }
 
         public MongoDbCache(IOptions<MongoDbCacheOptions> optionsAccessor)
         {
             var options = optionsAccessor.Value;
             _mongoContext = new MongoContext(options.ConnectionString, options.DatabaseName, options.CollectionName);
-            SetScanInterval(options.ScanInterval);
+            SetScanInterval(options.ExpiredScanInterval);
         }
 
         public byte[] Get(string key)
         {
+            var value = _mongoContext.GetCacheItem(key, withoutValue: false);
+
             ScanAndDeleteExpired();
 
-            return _mongoContext.GetCacheItem(key, withoutValue: false);
+            return value;
         }
 
         public async Task<byte[]> GetAsync(string key)
         {
+            var value = await _mongoContext.GetCacheItemAsync(key, withoutValue: false);
+
             ScanAndDeleteExpired();
 
-            return await _mongoContext.GetCacheItemAsync(key, withoutValue: false);
+            return value;
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            ScanAndDeleteExpired();
-
             _mongoContext.Set(key, value, options);
+
+            ScanAndDeleteExpired();
         }
 
         public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
-            ScanAndDeleteExpired();
-
             await _mongoContext.SetAsync(key, value, options);
+
+            ScanAndDeleteExpired();
         }
 
         public void Refresh(string key)
         {
-            ScanAndDeleteExpired();
-
             _mongoContext.GetCacheItem(key, withoutValue: true);
+
+            ScanAndDeleteExpired();
         }
 
         public async Task RefreshAsync(string key)
         {
-            ScanAndDeleteExpired();
-
             await _mongoContext.GetCacheItemAsync(key, withoutValue: true);
+
+            ScanAndDeleteExpired();
         }
 
         public void Remove(string key)
         {
-            ScanAndDeleteExpired();
-
             _mongoContext.Remove(key);
+
+            ScanAndDeleteExpired();
         }
 
         public async Task RemoveAsync(string key)
         {
-            ScanAndDeleteExpired();
-
             await _mongoContext.RemoveAsync(key);
+
+            ScanAndDeleteExpired();
         }
 
         private void ScanAndDeleteExpired()
         {
-            if (_lastScan.Add(_scanInterval) < DateTimeOffset.UtcNow)
+            var utcNow = DateTimeOffset.UtcNow;
+
+            if (_lastScan.Add(_scanInterval) < utcNow)
             {
                 Task.Run(() =>
                 {
-                    _lastScan = DateTimeOffset.UtcNow;
-                    _mongoContext.DeleteExpired();
+                    _lastScan = utcNow;
+                    _mongoContext.DeleteExpired(utcNow);
                 });
             }
         }

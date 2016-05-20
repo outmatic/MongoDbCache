@@ -8,7 +8,7 @@ namespace MongoDbCache
         public string ConnectionString { get; set; }
         public string DatabaseName { get; set; }
         public string CollectionName { get; set; }
-        public TimeSpan? ScanInterval { get; set; }
+        public TimeSpan? ExpiredScanInterval { get; set; }
 
         MongoDbCacheOptions IOptions<MongoDbCacheOptions>.Value => this;
     }
