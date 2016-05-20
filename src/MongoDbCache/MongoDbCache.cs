@@ -41,14 +41,14 @@ namespace MongoDbCache
         {
             ScanAndDeleteExpired();
 
-            return _mongoContext.GetCacheItem(key, true);
+            return _mongoContext.GetCacheItem(key, withoutValue: false);
         }
 
         public async Task<byte[]> GetAsync(string key)
         {
             ScanAndDeleteExpired();
 
-            return await _mongoContext.GetCacheItemAsync(key, true);
+            return await _mongoContext.GetCacheItemAsync(key, withoutValue: false);
         }
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options = null)
@@ -69,14 +69,14 @@ namespace MongoDbCache
         {
             ScanAndDeleteExpired();
 
-            _mongoContext.GetCacheItem(key, false);
+            _mongoContext.GetCacheItem(key, withoutValue: true);
         }
 
         public async Task RefreshAsync(string key)
         {
             ScanAndDeleteExpired();
 
-            await _mongoContext.GetCacheItemAsync(key, false);
+            await _mongoContext.GetCacheItemAsync(key, withoutValue: true);
         }
 
         public void Remove(string key)

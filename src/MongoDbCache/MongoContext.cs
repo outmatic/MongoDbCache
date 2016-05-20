@@ -1,12 +1,14 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
+using MongoDB.Bson;
 using MongoDB.Driver;
 
 namespace MongoDbCache
 {
     internal class MongoContext
     {
+        #region private
         private readonly IMongoCollection<CacheItem> _collection;
 
         private static FilterDefinition<CacheItem> FilterByKey(string key)
@@ -19,9 +21,15 @@ namespace MongoDbCache
             return Builders<CacheItem>.Filter.Ne(x => x.ExpiresAt, null);
         }
 
-        private static ProjectionDefinition<CacheItem> ProjectWithoutValue()
+        private IFindFluent<CacheItem, CacheItem> GetItemQuery(string key, bool withoutValue)
         {
-            return Builders<CacheItem>.Projection.Exclude(x => x.Value);
+            var query = _collection.Find(FilterByKey(key));
+            if (withoutValue)
+            {
+                query = query.Project<CacheItem>(Builders<CacheItem>.Projection.Exclude(x => x.Value));
+            }
+
+            return query;
         }
 
         private static bool CheckIfExpired(CacheItem cacheItem)
@@ -75,6 +83,7 @@ namespace MongoDbCache
 
             return cacheItem.WithExpiresAt(absoluteExpiration);
         }
+        #endregion
 
         public MongoContext(IMongoDatabase database, string collectionName)
         {
@@ -93,20 +102,15 @@ namespace MongoDbCache
             _collection.DeleteMany(Builders<CacheItem>.Filter.Lte(x => x.ExpiresAt, DateTimeOffset.UtcNow));
         }
 
-        public byte[] GetCacheItem(string key, bool withValue)
+        public byte[] GetCacheItem(string key, bool withoutValue)
         {
             if (key == null)
             {
                 return null;
             }
 
-            var find = _collection.Find(FilterByKey(key));
-            if (!withValue)
-            {
-                find = find.Project<CacheItem>(ProjectWithoutValue());
-            }
-
-            var cacheItem = find.SingleOrDefault();
+            var query = GetItemQuery(key, withoutValue);
+            var cacheItem = query.SingleOrDefault();
             if (cacheItem == null)
             {
                 return null;
@@ -123,20 +127,15 @@ namespace MongoDbCache
             return cacheItem?.Value;
         }
 
-        public async Task<byte[]> GetCacheItemAsync(string key, bool withValue)
+        public async Task<byte[]> GetCacheItemAsync(string key, bool withoutValue)
         {
             if (key == null)
             {
                 return null;
             }
 
-            var find = _collection.Find(FilterByKey(key));
-            if (!withValue)
-            {
-                find = find.Project<CacheItem>(ProjectWithoutValue());
-            }
-
-            var cacheItem = await find.SingleOrDefaultAsync();
+            var query = GetItemQuery(key, withoutValue);
+            var cacheItem = await query.SingleOrDefaultAsync();
             if (cacheItem == null)
             {
                 return null;
@@ -155,6 +154,21 @@ namespace MongoDbCache
 
         public void Set(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
+            if (options?.AbsoluteExpirationRelativeToNow?.Ticks < 0)
+            {
+
+            }
+
             var absolutExpiration = options?.AbsoluteExpiration;
             var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
 
@@ -163,10 +177,9 @@ namespace MongoDbCache
                 absolutExpiration = DateTimeOffset.UtcNow.Add(options.AbsoluteExpirationRelativeToNow.Value);
             }
 
-            if (absolutExpiration < DateTimeOffset.UtcNow)
+            if (absolutExpiration <= DateTimeOffset.UtcNow)
             {
-                //TODO throw exceptions
-                return;
+                throw new InvalidOperationException("The absolute expiration value must be in the future.");
             }
 
             var expiresAt = GetExpiresAt(slidingExpirationInSeconds, absolutExpiration);
@@ -180,6 +193,16 @@ namespace MongoDbCache
 
         public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
         {
+            if (key == null)
+            {
+                throw new ArgumentNullException(nameof(key));
+            }
+
+            if (value == null)
+            {
+                throw new ArgumentNullException(nameof(value));
+            }
+
             var absolutExpiration = options?.AbsoluteExpiration;
             var slidingExpirationInSeconds = options?.SlidingExpiration?.TotalSeconds;
 
