@@ -8,7 +8,7 @@
     "Microsoft.Extensions.Caching.Abstractions": "1.0.0-rc2-final",
     "Microsoft.Extensions.DependencyInjection": "1.0.0-rc2-final",
     "Microsoft.Extensions.Options": "1.0.0-rc2-final",
-    "MongoDB.Driver": "2.2.3"
+    "MongoDB.Driver": "2.2.4"
   },
 
   "frameworks": {
