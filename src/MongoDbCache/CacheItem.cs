@@ -28,7 +28,8 @@ namespace MongoDbCache
 
         public CacheItem WithExpiresAt(DateTimeOffset? expiresAt)
         {
-            return new CacheItem(Key, Value, expiresAt, AbsoluteExpiration, SlidingExpirationInSeconds);
+            ExpiresAt = expiresAt;
+            return this;
         }
     }
 }
