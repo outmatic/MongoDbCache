@@ -7,7 +7,7 @@ Install the nuget package
 
     PM> Install-Package MongoDbCache -Pre
 
-You can either choose to use the provided extension method or register the implementation in the ConfigureServices:
+You can either choose to use the provided extension method or register the implementation in the ConfigureServices method:
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
