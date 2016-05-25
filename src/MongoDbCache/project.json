@@ -2,7 +2,7 @@
   "title": "MongoDbCache",
   "copyright": "AppSpace snc",
   "description": "A distributed cache based on MongoDb",
-  "version": "0.3.3-rc2-*",
+  "version": "0.3.4-rc2-*",
 
   "dependencies": {
     "Microsoft.Extensions.Caching.Abstractions": "1.0.0-rc2-final",

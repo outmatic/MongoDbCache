@@ -17,13 +17,22 @@ namespace MongoDbCache
         public double? SlidingExpirationInSeconds { get; }
 
         [BsonConstructor]
-        public CacheItem(string key, byte[] value, DateTimeOffset? expiresAt, DateTimeOffset? absoluteExpiration, double? slidingExpirationInSeconds)
+        public CacheItem(string key, byte[] value, DateTimeOffset? expiresAt, DateTimeOffset? absoluteExpiration,
+            double? slidingExpirationInSeconds)
         {
             Key = key;
             Value = value;
             ExpiresAt = expiresAt;
             AbsoluteExpiration = absoluteExpiration;
             SlidingExpirationInSeconds = slidingExpirationInSeconds;
+        }
+
+        [BsonConstructor]
+        public CacheItem(string key, DateTimeOffset? expiresAt, DateTimeOffset? absoluteExpiration,
+            double? slidingExpirationInSeconds)
+            : this(key, null, expiresAt, absoluteExpiration, slidingExpirationInSeconds)
+        {
+
         }
 
         public CacheItem WithExpiresAt(DateTimeOffset? expiresAt)

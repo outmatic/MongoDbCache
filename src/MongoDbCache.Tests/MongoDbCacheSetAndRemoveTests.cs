@@ -79,5 +79,18 @@ namespace MongoDbCache.Tests
             result = cache.Get(key);
             Assert.Null(result);
         }
+
+        [Fact]
+        public void RefreshRefreshes()
+        {
+            var cache = MongoDbCacheConfig.CreateCacheInstance();
+            var value = new byte[1];
+            const string key = "myKeyToBeRefreshed";
+
+            cache.Set(key, value);
+            cache.Refresh(key);
+            var result = cache.Get(key);
+            Assert.Equal(value, result);
+        }
     }
 }
