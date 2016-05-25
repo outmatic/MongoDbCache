@@ -22,7 +22,7 @@ public void ConfigureServices(IServiceCollection services)
       ConnectionString = "mongodb://localhost",
       CollectionName = "cache",
       DatabaseName = "CacheDb",
-      ScanInterval = TimeSpan.FromMinutes(5)
+      ExpiredScanInterval = TimeSpan.FromMinutes(5)
     }));
 }
 ```
