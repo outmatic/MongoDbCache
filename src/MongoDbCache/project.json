@@ -2,17 +2,18 @@
   "title": "MongoDbCache",
   "copyright": "AppSpace snc",
   "description": "A distributed cache based on MongoDb",
-  "version": "0.3.4-rc2-*",
+  "version": "0.3.4-rc3-*",
 
   "dependencies": {
-    "Microsoft.Extensions.Caching.Abstractions": "1.0.0-rc2-final",
-    "Microsoft.Extensions.DependencyInjection": "1.0.0-rc2-final",
-    "Microsoft.Extensions.Options": "1.0.0-rc2-final",
-    "MongoDB.Driver": "2.2.4"
+    "Microsoft.Extensions.Caching.Abstractions": "1.1.0",
+    "Microsoft.Extensions.DependencyInjection": "1.1.0",
+    "Microsoft.Extensions.Options": "1.1.0",
+    "MongoDB.Driver": "2.4.1"
   },
 
   "frameworks": {
     "net451": {
-    }
+    },
+    "netstandard1.5":  {}
   }
 }
