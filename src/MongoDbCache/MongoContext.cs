@@ -2,6 +2,7 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using MongoDB.Driver;
+using System.Threading;
 
 namespace MongoDbCache
 {
@@ -93,7 +94,7 @@ namespace MongoDbCache
                 Builders<CacheItem>.IndexKeys.Ascending(x => x.ExpiresAt),
                 new CreateIndexOptions
                 {
-                    Background = true                    
+                    Background = true
                 });
         }
 
@@ -129,7 +130,7 @@ namespace MongoDbCache
             return cacheItem?.Value;
         }
 
-        public async Task<byte[]> GetCacheItemAsync(string key, bool withoutValue)
+        public async Task<byte[]> GetCacheItemAsync(string key, bool withoutValue, CancellationToken token = default(CancellationToken))
         {
             var utcNow = DateTimeOffset.UtcNow;
 
@@ -139,7 +140,7 @@ namespace MongoDbCache
             }
 
             var query = GetItemQuery(key, withoutValue);
-            var cacheItem = await query.SingleOrDefaultAsync();
+            var cacheItem = await query.SingleOrDefaultAsync(token);
             if (cacheItem == null)
             {
                 return null;
@@ -192,7 +193,7 @@ namespace MongoDbCache
             });
         }
 
-        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null, CancellationToken token = default(CancellationToken))
         {
             var utcNow = DateTimeOffset.UtcNow;
 
@@ -225,7 +226,7 @@ namespace MongoDbCache
             await _collection.ReplaceOneAsync(FilterByKey(key), cacheItem, new UpdateOptions
             {
                 IsUpsert = true
-            });
+            }, token);
         }
 
         public void Remove(string key)
@@ -233,9 +234,9 @@ namespace MongoDbCache
             _collection.DeleteOne(FilterByKey(key));
         }
 
-        public async Task RemoveAsync(string key)
+        public async Task RemoveAsync(string key, CancellationToken token = default(CancellationToken))
         {
-            await _collection.DeleteOneAsync(FilterByKey(key));
+            await _collection.DeleteOneAsync(FilterByKey(key), token);
         }
     }
 }
