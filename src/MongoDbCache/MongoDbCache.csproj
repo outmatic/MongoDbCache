@@ -2,19 +2,20 @@
 
   <PropertyGroup>
     <Description>A distributed cache based on MongoDb</Description>
-    <Copyright>AppSpace snc</Copyright>
+    <Copyright>OUTMATIC Alessandro Petrelli</Copyright>
     <AssemblyTitle>MongoDbCache</AssemblyTitle>
     <VersionPrefix>2.0.0</VersionPrefix>
-    <TargetFrameworks>net451;netstandard1.5;netstandard2.0</TargetFrameworks>
+    <TargetFrameworks>net451;netstandard1.6;netstandard2.0</TargetFrameworks>
     <AssemblyName>MongoDbCache</AssemblyName>
     <PackageId>MongoDbCache</PackageId>
     <GenerateAssemblyConfigurationAttribute>false</GenerateAssemblyConfigurationAttribute>
     <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
     <GenerateAssemblyProductAttribute>false</GenerateAssemblyProductAttribute>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="MongoDB.Driver" Version="2.4.1" />
+    <PackageReference Include="MongoDB.Driver" Version="2.4.4" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'net451' ">
