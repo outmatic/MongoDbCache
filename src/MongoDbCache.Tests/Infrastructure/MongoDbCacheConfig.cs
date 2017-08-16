@@ -8,7 +8,7 @@ namespace MongoDbCache.Tests.Infrastructure
         {
             return new MongoDbCache(new MongoDbCacheOptions
             {
-                ConnectionString = "mongodb://localhost",
+                ConnectionString = "mongodb://localhost:27017",
                 DatabaseName = "CacheTests",
                 CollectionName = "caches"
             });
