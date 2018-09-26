@@ -5,7 +5,7 @@ An distributed cache implementation based on MongoDb, inspired by RedisCache and
 
 Install the nuget package
 
-    PM> Install-Package MongoDbCache -Pre
+    PM> Install-Package MongoDbCache
 
 You can either choose to use the provided extension method or register the implementation in the ConfigureServices method:
 
