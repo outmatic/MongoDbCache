@@ -6,6 +6,9 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{BD7460C6-FF01-4BD9-9E67-3C8F89F330DA}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{8ECC1B6E-FE95-4F4A-A08D-C1AC7642D2E9}"
+	ProjectSection(SolutionItems) = preProject
+		README.md = README.md
+	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDbCache", "src\MongoDbCache\MongoDbCache.csproj", "{71D72C3E-586C-481E-9D49-B2A37C1E4C01}"
 EndProject

@@ -37,9 +37,9 @@ namespace MongoDbCache.Tests
 
             // Act
             services.AddMongoDbCache(options => {
-                options.CollectionName = defaultOptions.CollectionName;
                 options.ConnectionString = defaultOptions.ConnectionString;
                 options.DatabaseName = defaultOptions.DatabaseName;
+                options.CollectionName = defaultOptions.CollectionName;
                 options.ExpiredScanInterval = defaultOptions.ExpiredScanInterval;
             });
 
