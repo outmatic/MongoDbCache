@@ -1,14 +1,13 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Caching.Distributed;
 using MongoDB.Driver;
 using System.Threading;
+using Microsoft.Extensions.Caching.Distributed;
 
 namespace MongoDbCache
 {
     internal class MongoContext
     {
-        #region private
         private readonly IMongoCollection<CacheItem> _collection;
 
         private static FilterDefinition<CacheItem> FilterByKey(string key)
@@ -83,19 +82,18 @@ namespace MongoDbCache
 
             return cacheItem.WithExpiresAt(absoluteExpiration);
         }
-        #endregion
 
         public MongoContext(string connectionString, string databaseName, string collectionName)
         {
             var client = new MongoClient(connectionString);
             var database = client.GetDatabase(databaseName);
+
+            IndexKeysDefinition<CacheItem> expireAtIndexModel =
+                new IndexKeysDefinitionBuilder<CacheItem>().Ascending(p => p.ExpiresAt);
+
             _collection = database.GetCollection<CacheItem>(collectionName);
-            _collection.Indexes.CreateOne(
-                Builders<CacheItem>.IndexKeys.Ascending(x => x.ExpiresAt),
-                new CreateIndexOptions
-                {
-                    Background = true
-                });
+
+            _collection.Indexes.CreateOne(new CreateIndexModel<CacheItem>(expireAtIndexModel));
         }
 
         public void DeleteExpired(DateTimeOffset utcNow)
