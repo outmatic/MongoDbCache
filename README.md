@@ -1,5 +1,5 @@
 # MongoDbCache
-An distributed cache implementation based on MongoDb, inspired by RedisCache and SqlServerCache (see https://docs.microsoft.com/en-us/aspnet/core/performance/caching/distributed).
+A distributed cache implementation based on MongoDb, inspired by RedisCache and SqlServerCache (see https://docs.microsoft.com/en-us/aspnet/core/performance/caching/distributed).
 
 ### How do I get started?
 
