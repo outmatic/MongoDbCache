@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.DependencyInjection;
+using MongoDbCache.Tests.Infrastructure;
 using Xunit;
 
 namespace MongoDbCache.Tests
@@ -14,7 +15,9 @@ namespace MongoDbCache.Tests
             var services = new ServiceCollection();
 
             // Act
-            services.AddMongoDbCache();
+            services.AddMongoDbCache(options => {
+                options = MongoDbCacheConfig.CreateOptions();
+            });
 
             // Assert
             var distributedCache = services.FirstOrDefault(desc => desc.ServiceType == typeof(IDistributedCache));
@@ -24,14 +27,21 @@ namespace MongoDbCache.Tests
         }
 
         [Fact]
-        public void AddMongoDbCache_DoesNotReplaceUserRegisteredServices()
+        public void AddMongoDbCache_ReplaceUserRegisteredServices()
         {
             // Arrange
             var services = new ServiceCollection();
-            services.AddScoped<IDistributedCache, TestDistributedCache>();
+            services.AddSingleton<IDistributedCache, TestDistributedCache>();
+
+            var defaultOptions = MongoDbCacheConfig.CreateOptions();
 
             // Act
-            services.AddMongoDbCache();
+            services.AddMongoDbCache(options => {
+                options.ConnectionString = defaultOptions.ConnectionString;
+                options.DatabaseName = defaultOptions.DatabaseName;
+                options.CollectionName = defaultOptions.CollectionName;
+                options.ExpiredScanInterval = defaultOptions.ExpiredScanInterval;
+            });
 
             // Assert
             var serviceProvider = services.BuildServiceProvider();
@@ -39,8 +49,8 @@ namespace MongoDbCache.Tests
             var distributedCache = services.FirstOrDefault(desc => desc.ServiceType == typeof(IDistributedCache));
 
             Assert.NotNull(distributedCache);
-            Assert.Equal(ServiceLifetime.Scoped, distributedCache.Lifetime);
-            Assert.IsType<TestDistributedCache>(serviceProvider.GetRequiredService<IDistributedCache>());
+            Assert.Equal(ServiceLifetime.Singleton, distributedCache.Lifetime);
+            Assert.IsType<MongoDbCache>(serviceProvider.GetRequiredService<IDistributedCache>());
         }
     }
 }

@@ -1,5 +1,5 @@
 # MongoDbCache
-An distributed cache implementation based on MongoDb, inspired by RedisCache and SqlServerCache (see https://docs.asp.net/en/latest/performance/caching/distributed.html).
+An distributed cache implementation based on MongoDb, inspired by RedisCache and SqlServerCache (see https://docs.microsoft.com/en-us/aspnet/core/performance/caching/distributed).
 
 ### How do I get started?
 
@@ -11,20 +11,14 @@ You can either choose to use the provided extension method or register the imple
 
 ```csharp
 public void ConfigureServices(IServiceCollection services)
-{
-  // add via the extension method
-  services.AddMongoDbCache();
-  
-  // or manually register the implementation
-  services.AddSingleton<IDistributedCache>(serviceProvider =>
-    new MongoDbCache.MongoDbCache(new MongoDbCacheOptions
-    {
-      ConnectionString = "mongodb://localhost",
-      CollectionName = "cache",
-      DatabaseName = "CacheDb",
-      ExpiredScanInterval = TimeSpan.FromMinutes(5)
-    }));
+{  
+	services.AddMongoDbCache(options => {
+		options.ConnectionString = "mongodb://localhost:27017",
+		options.DatabaseName = "MongoCache",
+		options.CollectionName = "appcache",
+		options.ExpiredScanInterval = TimeSpan.FromMinutes(10)
+	});
 }
 ```
 
-MongoDbCache implements IDistributedCache, therefore you can use all the sync and async methods provided by the interface, please see https://docs.asp.net/en/latest/performance/caching/distributed.html#the-idistributedcache-interface.
+MongoDbCache implements IDistributedCache, therefore you can use all the sync and async methods provided by the interface, please see https://docs.microsoft.com/en-us/aspnet/core/performance/caching/distributed.

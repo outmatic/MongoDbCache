@@ -7,12 +7,16 @@ namespace MongoDbCache
     {
         [BsonId]
         public string Key { get; }
+
         [BsonElement("v")]
         public byte[] Value { get; }
+
         [BsonElement("e")]
         public DateTimeOffset? ExpiresAt { get; private set; }
+
         [BsonElement("a")]
         public DateTimeOffset? AbsoluteExpiration { get; }
+
         [BsonElement("s")]
         public double? SlidingExpirationInSeconds { get; }
 

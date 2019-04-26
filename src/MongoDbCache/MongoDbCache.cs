@@ -1,14 +1,13 @@
 ﻿using System;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Options;
-using System.Threading;
 
 namespace MongoDbCache
 {
     public class MongoDbCache : IDistributedCache
     {
-        #region private
         private DateTimeOffset _lastScan = DateTimeOffset.UtcNow;
         private TimeSpan _scanInterval;
         private readonly TimeSpan _defaultScanInterval = TimeSpan.FromMinutes(5);
@@ -41,7 +40,6 @@ namespace MongoDbCache
                 ? scanInterval.Value
                 : _defaultScanInterval;
         }
-        #endregion
 
         public MongoDbCache(IOptions<MongoDbCacheOptions> optionsAccessor)
         {
@@ -74,8 +72,6 @@ namespace MongoDbCache
             ScanAndDeleteExpired();
         }
 
-#if !netstandard20
-
         public async Task<byte[]> GetAsync(string key)
         {
             var value = await _mongoContext.GetCacheItemAsync(key, withoutValue: false);
@@ -105,8 +101,8 @@ namespace MongoDbCache
 
             ScanAndDeleteExpired();
         }
-#else
-         public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
+
+        public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
         {
             var value = await _mongoContext.GetCacheItemAsync(key, withoutValue: false, token: token);
 
@@ -135,8 +131,6 @@ namespace MongoDbCache
 
             ScanAndDeleteExpired();
         }
-
-#endif
 
         public void Remove(string key)
         {
