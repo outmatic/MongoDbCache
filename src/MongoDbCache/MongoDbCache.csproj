@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <Version>2.2.0</Version>
+    <Version>2.3.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Copyright>Copyright (c) 2019 OUTMATIC Alessandro Petrelli</Copyright>
+    <Copyright>Copyright (c) OUTMATIC Alessandro Petrelli</Copyright>
     <Authors>Alessandro Petrelli &amp; Contributors</Authors>
     <Company>OUTMATIC Alessandro Petrelli</Company>
     <PackageProjectUrl>https://github.com/outmatic/MongoDbCache</PackageProjectUrl>
@@ -15,7 +15,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.Extensions.Caching.Abstractions" Version="2.2.0" />
     <PackageReference Include="Microsoft.Extensions.Options" Version="2.2.0" />
-    <PackageReference Include="MongoDB.Driver" Version="2.8.0" />
+    <PackageReference Include="MongoDB.Driver" Version="2.8.1" />
   </ItemGroup>
 
 </Project>
