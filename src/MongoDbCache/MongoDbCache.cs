@@ -15,6 +15,12 @@ namespace MongoDbCache
 
         private void ValidateOptions(MongoDbCacheOptions cacheOptions)
         {
+            if (!string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings == null)
+            {
+                throw new ArgumentException(
+                    $"Only one of {nameof(cacheOptions.ConnectionString)} and {nameof(cacheOptions.MongoClientSettings)} can be set.");
+            }
+            
             if (string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings == null)
             {
                 throw new ArgumentException(
