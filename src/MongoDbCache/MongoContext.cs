@@ -83,9 +83,9 @@ namespace MongoDbCache
             return cacheItem.WithExpiresAt(absoluteExpiration);
         }
 
-        public MongoContext(string connectionString, string databaseName, string collectionName)
+        public MongoContext(string connectionString, MongoClientSettings mongoClientSettings, string databaseName, string collectionName)
         {
-            var client = new MongoClient(connectionString);
+            var client = mongoClientSettings == null ? new MongoClient(connectionString) : new MongoClient(mongoClientSettings);
             var database = client.GetDatabase(databaseName);
 
             IndexKeysDefinition<CacheItem> expireAtIndexModel =
