@@ -15,10 +15,16 @@ namespace MongoDbCache
 
         private void ValidateOptions(MongoDbCacheOptions cacheOptions)
         {
-            if (string.IsNullOrEmpty(cacheOptions.ConnectionString))
+            if (!string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings == null)
             {
                 throw new ArgumentException(
-                    $"{nameof(cacheOptions.ConnectionString)} cannot be empty or null.");
+                    $"Only one of {nameof(cacheOptions.ConnectionString)} and {nameof(cacheOptions.MongoClientSettings)} can be set.");
+            }
+            
+            if (string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings == null)
+            {
+                throw new ArgumentException(
+                    $"{nameof(cacheOptions.ConnectionString)} or {nameof(cacheOptions.MongoClientSettings)} cannot be empty or null.");
             }
 
             if (string.IsNullOrEmpty(cacheOptions.DatabaseName))
@@ -45,7 +51,7 @@ namespace MongoDbCache
         {
             var options = optionsAccessor.Value;
             ValidateOptions(options);
-            _mongoContext = new MongoContext(options.ConnectionString, options.DatabaseName, options.CollectionName);
+            _mongoContext = new MongoContext(options.ConnectionString, options.MongoClientSettings, options.DatabaseName, options.CollectionName);
             SetScanInterval(options.ExpiredScanInterval);
         }
 
