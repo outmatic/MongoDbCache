@@ -2,9 +2,9 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <Version>2.3.0</Version>
+    <Version>2.4.0</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
-    <Copyright>Copyright (c) OUTMATIC Alessandro Petrelli</Copyright>
+    <Copyright>Copyright (c) OUTMATIC Alessandro Petrelli &amp; Contributors</Copyright>
     <Authors>Alessandro Petrelli &amp; Contributors</Authors>
     <Company>OUTMATIC Alessandro Petrelli</Company>
     <PackageProjectUrl>https://github.com/outmatic/MongoDbCache</PackageProjectUrl>
