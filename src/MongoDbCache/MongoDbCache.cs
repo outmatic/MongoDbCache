@@ -13,9 +13,9 @@ namespace MongoDbCache
         private readonly TimeSpan _defaultScanInterval = TimeSpan.FromMinutes(5);
         private readonly MongoContext _mongoContext;
 
-        private void ValidateOptions(MongoDbCacheOptions cacheOptions)
+        private static void ValidateOptions(MongoDbCacheOptions cacheOptions)
         {
-            if (!string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings == null)
+            if (!string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings != null)
             {
                 throw new ArgumentException(
                     $"Only one of {nameof(cacheOptions.ConnectionString)} and {nameof(cacheOptions.MongoClientSettings)} can be set.");
@@ -51,7 +51,9 @@ namespace MongoDbCache
         {
             var options = optionsAccessor.Value;
             ValidateOptions(options);
+
             _mongoContext = new MongoContext(options.ConnectionString, options.MongoClientSettings, options.DatabaseName, options.CollectionName);
+            
             SetScanInterval(options.ExpiredScanInterval);
         }
 
@@ -78,37 +80,7 @@ namespace MongoDbCache
             ScanAndDeleteExpired();
         }
 
-        public async Task<byte[]> GetAsync(string key)
-        {
-            var value = await _mongoContext.GetCacheItemAsync(key, withoutValue: false);
-
-            ScanAndDeleteExpired();
-
-            return value;
-        }
-
-        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options = null)
-        {
-            await _mongoContext.SetAsync(key, value, options);
-
-            ScanAndDeleteExpired();
-        }
-
-        public async Task RefreshAsync(string key)
-        {
-            await _mongoContext.GetCacheItemAsync(key, withoutValue: true);
-
-            ScanAndDeleteExpired();
-        }
-
-        public async Task RemoveAsync(string key)
-        {
-            await _mongoContext.RemoveAsync(key);
-
-            ScanAndDeleteExpired();
-        }
-
-        public async Task<byte[]> GetAsync(string key, CancellationToken token = default(CancellationToken))
+        public async Task<byte[]> GetAsync(string key, CancellationToken token = default)
         {
             var value = await _mongoContext.GetCacheItemAsync(key, withoutValue: false, token: token);
 
@@ -117,21 +89,21 @@ namespace MongoDbCache
             return value;
         }
 
-        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default(CancellationToken))
+        public async Task SetAsync(string key, byte[] value, DistributedCacheEntryOptions options, CancellationToken token = default)
         {
             await _mongoContext.SetAsync(key, value, options, token);
 
             ScanAndDeleteExpired();
         }
 
-        public async Task RefreshAsync(string key, CancellationToken token = default(CancellationToken))
+        public async Task RefreshAsync(string key, CancellationToken token = default)
         {
             await _mongoContext.GetCacheItemAsync(key, withoutValue: true, token: token);
 
             ScanAndDeleteExpired();
         }
 
-        public async Task RemoveAsync(string key, CancellationToken token = default(CancellationToken))
+        public async Task RemoveAsync(string key, CancellationToken token = default)
         {
             await _mongoContext.RemoveAsync(key, token);
 

@@ -88,12 +88,12 @@ namespace MongoDbCache
             var client = mongoClientSettings == null ? new MongoClient(connectionString) : new MongoClient(mongoClientSettings);
             var database = client.GetDatabase(databaseName);
 
-            IndexKeysDefinition<CacheItem> expireAtIndexModel =
-                new IndexKeysDefinitionBuilder<CacheItem>().Ascending(p => p.ExpiresAt);
+            var expireAtIndexModel = new IndexKeysDefinitionBuilder<CacheItem>().Ascending(p => p.ExpiresAt);
 
             _collection = database.GetCollection<CacheItem>(collectionName);
 
-            _collection.Indexes.CreateOne(new CreateIndexModel<CacheItem>(expireAtIndexModel, new CreateIndexOptions {
+            _collection.Indexes.CreateOne(new CreateIndexModel<CacheItem>(expireAtIndexModel, new CreateIndexOptions
+            {
                 Background = true
             }));
         }
@@ -148,7 +148,7 @@ namespace MongoDbCache
 
             if (CheckIfExpired(utcNow, cacheItem))
             {
-                Remove(cacheItem.Key);
+                await RemoveAsync(cacheItem.Key, token);
                 return null;
             }
 
