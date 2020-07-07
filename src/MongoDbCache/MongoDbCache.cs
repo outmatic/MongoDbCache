@@ -16,28 +16,16 @@ namespace MongoDbCache
         private static void ValidateOptions(MongoDbCacheOptions cacheOptions)
         {
             if (!string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings != null)
-            {
-                throw new ArgumentException(
-                    $"Only one of {nameof(cacheOptions.ConnectionString)} and {nameof(cacheOptions.MongoClientSettings)} can be set.");
-            }
+                throw new ArgumentException($"Only one of {nameof(cacheOptions.ConnectionString)} and {nameof(cacheOptions.MongoClientSettings)} can be set.");
             
             if (string.IsNullOrEmpty(cacheOptions.ConnectionString) && cacheOptions.MongoClientSettings == null)
-            {
-                throw new ArgumentException(
-                    $"{nameof(cacheOptions.ConnectionString)} or {nameof(cacheOptions.MongoClientSettings)} cannot be empty or null.");
-            }
+                throw new ArgumentException($"{nameof(cacheOptions.ConnectionString)} or {nameof(cacheOptions.MongoClientSettings)} cannot be empty or null.");
 
             if (string.IsNullOrEmpty(cacheOptions.DatabaseName))
-            {
-                throw new ArgumentException(
-                    $"{nameof(cacheOptions.DatabaseName)} cannot be empty or null.");
-            }
+                throw new ArgumentException($"{nameof(cacheOptions.DatabaseName)} cannot be empty or null.");
 
             if (string.IsNullOrEmpty(cacheOptions.CollectionName))
-            {
-                throw new ArgumentException(
-                    $"{nameof(cacheOptions.CollectionName)} cannot be empty or null.");
-            }
+                throw new ArgumentException($"{nameof(cacheOptions.CollectionName)} cannot be empty or null.");
         }
 
         private void SetScanInterval(TimeSpan? scanInterval)
@@ -122,13 +110,11 @@ namespace MongoDbCache
             var utcNow = DateTimeOffset.UtcNow;
 
             if (_lastScan.Add(_scanInterval) < utcNow)
-            {
                 Task.Run(() =>
                 {
                     _lastScan = utcNow;
                     _mongoContext.DeleteExpired(utcNow);
                 });
-            }
         }
     }
 }
