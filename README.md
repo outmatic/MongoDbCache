@@ -13,24 +13,26 @@ The mongo connection settings can be passed as either a connection string or Mon
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {  
-	services.AddMongoDbCache(options => {
-		options.ConnectionString = "mongodb://localhost:27017",
-		options.DatabaseName = "MongoCache",
-		options.CollectionName = "appcache",
-		options.ExpiredScanInterval = TimeSpan.FromMinutes(10)
+	services.AddMongoDbCache(options =>
+	{
+		options.ConnectionString = "mongodb://localhost:27017";
+		options.DatabaseName = "MongoCache";
+		options.CollectionName = "appcache";
+		options.ExpiredScanInterval = TimeSpan.FromMinutes(10);
 	});
 }
 ```
 ```csharp
 public void ConfigureServices(IServiceCollection services)
 {  
-    var mongoSettings = new MongoClientSettings();
+    	var mongoSettings = new MongoClientSettings();
 
-	services.AddMongoDbCache(options => {
-		options.MongoClientSettings = mongoSettings,
-		options.DatabaseName = "MongoCache",
-		options.CollectionName = "appcache",
-		options.ExpiredScanInterval = TimeSpan.FromMinutes(10)
+	services.AddMongoDbCache(options =>
+	{
+		options.MongoClientSettings = mongoSettings;
+		options.DatabaseName = "MongoCache";
+		options.CollectionName = "appcache";
+		options.ExpiredScanInterval = TimeSpan.FromMinutes(10;
 	});
 }
 ```
