@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp2.2</TargetFramework>
-    <Version>2.4.1</Version>
+    <Version>2.4.2</Version>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <Copyright>Copyright (c) OUTMATIC Alessandro Petrelli &amp; Contributors</Copyright>
     <Authors>Alessandro Petrelli &amp; Contributors</Authors>
@@ -10,6 +10,7 @@
     <PackageProjectUrl>https://github.com/outmatic/MongoDbCache</PackageProjectUrl>
     <RepositoryUrl>https://github.com/outmatic/MongoDbCache</RepositoryUrl>
     <Description>A distributed cache implementation based on MongoDb, inspired by RedisCache and SqlServerCache</Description>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
