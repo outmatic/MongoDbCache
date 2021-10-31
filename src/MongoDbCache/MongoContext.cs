@@ -153,7 +153,7 @@ namespace MongoDbCache
             var expiresAt = GetExpiresAt(utcNow, slidingExpirationInSeconds, absolutExpiration);
             var cacheItem = new CacheItem(key, value, expiresAt, absolutExpiration, slidingExpirationInSeconds);
 
-            _collection.ReplaceOne(FilterByKey(key), cacheItem, new UpdateOptions
+            _collection.ReplaceOne(FilterByKey(key), cacheItem, new ReplaceOptions
             {
                 IsUpsert = true
             });
@@ -181,7 +181,7 @@ namespace MongoDbCache
             var expiresAt = GetExpiresAt(utcNow, slidingExpirationInSeconds, absolutExpiration);
             var cacheItem = new CacheItem(key, value, expiresAt, absolutExpiration, slidingExpirationInSeconds);
 
-            await _collection.ReplaceOneAsync(FilterByKey(key), cacheItem, new UpdateOptions
+            await _collection.ReplaceOneAsync(FilterByKey(key), cacheItem, new ReplaceOptions
             {
                 IsUpsert = true
             }, token);
